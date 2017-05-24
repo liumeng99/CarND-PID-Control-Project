@@ -12,7 +12,7 @@ cross track error (cte) as small as possible.
 ```
 cte = center_of_road_position - car_position
  # calculate control
-steering_value = - (P*cte + I*sum\_of\_all\_cte + D*time\_derivative\_of\_cte)
+steering_value = - (P*cte + I*sum_of_all_cte + D*time_derivative_of_cte)
 ```
 
 As you can see PID controller consist of three terms:
@@ -53,7 +53,7 @@ steer_value = speed_factor * pid_value;
 
 ```
 pid_speed.Init(0.4, 0, 3.5);
-double throttle = 0.9 + pid\_speed\_value;
+double throttle = 0.9 + pid_speed_value;
 ```
 
 This allows car speed up to 60-70 Mph at some parts of the track.
