@@ -1,7 +1,66 @@
-# CarND-Controls-PID
-Self-Driving Car Engineer Nanodegree Program
+## Overview
 
----
+[![steering a car wioth PID](http://img.youtube.com/vi/HIDspIf4IXY/0.jpg)](https://www.youtube.com/watch?v=HIDspIf4IXY)
+
+This project uses PID controller to steer a car in simulator. Program always knows how far the car from the center of the road. And goal is to keep car in the center of the road.
+
+## PID controller
+
+PID is a very simple controller that uses 3 parameters to keep your degree of freedom at specified value. For our car it means to keep
+cross track error (cte) as small as possible.
+
+```
+cte = center_of_road_position - car_position
+ # calculate control
+steering_value = - (P*cte + I*sum\_of\_all\_cte + D*time\_derivative\_of\_cte)
+```
+
+As you can see PID controller consist of three terms:
+
+"P*cte" is known as proportional term. It applyes control to the opposite direction of appearing error. If we will control only with this term our car will operate like this
+
+[![steering with only P term](http://img.youtube.com/vi/U_g_2mFFd-4/0.jpg)](https://www.youtube.com/watch?v=U_g_2mFFd-4)
+
+So, car oscillates around center of the road. That's why we need "D*time\_derivative\_of\_cte" called differential term which will smooth oscillations and car can drive succesfully.
+
+[![steering with P and D term](http://img.youtube.com/vi/YLinnu6SzOI/0.jpg)](https://www.youtube.com/watch?v=YLinnu6SzOI)
+
+You might also need "I*sum\_of\_all\_cte" - integral term if you have some constant deviation force in your environment. For car it may be some copnstant wind while driving on the straight lanes.
+We have not wind and straight lanes in our simulator, so we don't need integral term.
+
+## Parameters optimization
+
+You also need to know how to choose PID parameters for your task. So there are different possible ways:
+
+* Optimization by hand. It is the most easiest way. For higher car speed you need to choose parameters more precisely.
+* [Some classical methods](https://en.wikipedia.org/wiki/PID_controller#Overview_of_methods)
+* [Twiddle algorithm](https://martin-thoma.com/twiddle/)
+* [Gradient descent](https://en.wikipedia.org/wiki/Gradient_descent)
+* Your method :)
+
+## My solution
+
+I have optimized my PID parameters by hand. Also for handling higher car velocity I use couple of tricks:
+
+* Speed factor. PID tuned for 30 Mph shows less performance on 60-70 Mph. So I used very basic velocity adoptaion parameter.
+
+```
+double speed_factor = 31.0 / (speed + 1.0);
+steer_value = speed_factor * pid_value;
+```
+
+* Car speed PID controller. If CTE becomes big I slow down the car with second PID controller. It lets the car slows down on strongly curved turns.
+
+```
+pid_speed.Init(0.4, 0, 3.5);
+double throttle = 0.9 + pid\_speed\_value;
+```
+
+This allows car speed up to 60-70 Mph at some parts of the track.
+
+PID controller also have disadvantages. It has no information about device it controls. Need very precise tuning and higher update rates on higher speeds.
+Also it have no information about future environment states. Human can observe future curved turn and can adapt behaviour with respect to it. PID controller
+always deals with present errors and cannot control with respect to future circumstances.
 
 ## Dependencies
 
@@ -25,60 +84,5 @@ Self-Driving Car Engineer Nanodegree Program
 1. Clone this repo.
 2. Make a build directory: `mkdir build && cd build`
 3. Compile: `cmake .. && make`
-4. Run it: `./pid`. 
+4. Run it: `./pid`
 
-## Editor Settings
-
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
-
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
-
-## Code Style
-
-Please (do your best to) stick to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html).
-
-## Project Instructions and Rubric
-
-Note: regardless of the changes you make, your project must be buildable using
-cmake and make!
-
-More information is only accessible by people who are already enrolled in Term 2
-of CarND. If you are enrolled, see [the project page](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/f1820894-8322-4bb3-81aa-b26b3c6dcbaf/lessons/e8235395-22dd-4b87-88e0-d108c5e5bbf4/concepts/6a4d8d42-6a04-4aa6-b284-1697c0fd6562)
-for instructions and the project rubric.
-
-## Hints!
-
-* You don't have to follow this directory structure, but if you do, your work
-  will span all of the .cpp files here. Keep an eye out for TODOs.
-
-## Call for IDE Profiles Pull Requests
-
-Help your fellow students!
-
-We decided to create Makefiles with cmake to keep this project as platform
-agnostic as possible. Similarly, we omitted IDE profiles in order to we ensure
-that students don't feel pressured to use one IDE or another.
-
-However! I'd love to help people get up and running with their IDEs of choice.
-If you've created a profile for an IDE that you think other students would
-appreciate, we'd love to have you add the requisite profile files and
-instructions to ide_profiles/. For example if you wanted to add a VS Code
-profile, you'd add:
-
-* /ide_profiles/vscode/.vscode
-* /ide_profiles/vscode/README.md
-
-The README should explain what the profile does, how to take advantage of it,
-and how to install it.
-
-Frankly, I've never been involved in a project with multiple IDE profiles
-before. I believe the best way to handle this would be to keep them out of the
-repo root to avoid clutter. My expectation is that most profiles will include
-instructions to copy files to a new location to get picked up by the IDE, but
-that's just a guess.
-
-One last note here: regardless of the IDE used, every submitted project must
-still be compilable with cmake and make./
